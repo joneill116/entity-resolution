@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from urllib.parse import quote
 from uuid import UUID
 
 from rdflib import Graph, Literal, URIRef
@@ -82,12 +83,14 @@ class KnowledgeGraph:
 
     def _source_entity_uri(self, source: DataSource, source_id: str) -> URIRef:
         """Generate a URI for a source entity."""
-        return ER[f"source/{source.value}/{source_id}"]
+        safe_source_id = quote(str(source_id), safe="")
+        return ER[f"source/{source.value}/{safe_source_id}"]
 
     def _identifier_uri(self, id_type: str, value: str) -> URIRef:
         """Generate a URI for an identifier."""
-        clean_value = value.replace(" ", "_").replace("/", "_")
-        return ER[f"identifier/{id_type}/{clean_value}"]
+        safe_type = quote(id_type, safe="")
+        safe_value = quote(value, safe="")
+        return ER[f"identifier/{safe_type}/{safe_value}"]
 
     def add_source_entity(self, entity: SourceEntity) -> URIRef:
         """

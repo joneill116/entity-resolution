@@ -28,9 +28,8 @@ class MatchConfig:
     min_similarity_threshold: float = 0.7
 
     # Weights for different matching components
-    identifier_match_weight: float = 0.4
-    name_match_weight: float = 0.35
-    attribute_match_weight: float = 0.25
+    identifier_match_weight: float = 0.5
+    name_match_weight: float = 0.5
 
     # Threshold for high confidence matches
     high_confidence_threshold: float = 0.9

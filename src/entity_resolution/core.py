@@ -15,6 +15,7 @@ from uuid import uuid4
 from entity_resolution.graph import KnowledgeGraph
 from entity_resolution.models import (
     ConfidenceLevel,
+    DataSource,
     Entity,
     EntityMatch,
     EntityType,
@@ -178,30 +179,15 @@ class EntityResolver:
         # Build clusters of matching entities using union-find
         clusters = self._cluster_entities()
 
-        # Create resolution results
+        # Create resolution results for all clusters
         results = []
-        resolved_entity_ids = set()
-
         for cluster in clusters:
-            if len(cluster) > 0:
-                result = self._create_resolution_result(cluster)
-                results.append(result)
-                for entity in cluster:
-                    resolved_entity_ids.add((entity.source, entity.source_id))
-
-        # Find unresolved entities
-        unresolved = [
-            e for e in self._source_entities if (e.source, e.source_id) not in resolved_entity_ids
-        ]
-
-        # Create single-entity results for unresolved entities
-        for entity in unresolved:
-            result = self._create_resolution_result([entity])
+            result = self._create_resolution_result(cluster)
             results.append(result)
 
         processing_time = (time.time() - start_time) * 1000
         for result in results:
-            result.processing_time_ms = processing_time / len(results)
+            result.processing_time_ms = processing_time / len(results) if results else 0
 
         logger.info(
             f"Resolution complete: {len(results)} canonical entities "
@@ -256,14 +242,71 @@ class EntityResolver:
                 clusters[root] = []
             clusters[root].append(entity)
 
-        # Only return clusters with more than one entity (actual matches)
-        return [c for c in clusters.values() if len(c) > 1]
+        # Return all clusters - both matched (>1 entity) and unmatched (1 entity)
+        return list(clusters.values())
+
+    def _select_canonical_name(self, cluster: list[SourceEntity]) -> str:
+        """
+        Select the best canonical name from a cluster of entities.
+
+        Uses a quality-based selection that considers:
+        1. Name completeness (longer names are often more formal)
+        2. Source priority (some sources have higher quality data)
+        3. Name frequency (more common names across sources)
+
+        Args:
+            cluster: List of source entities in the cluster.
+
+        Returns:
+            The selected canonical name.
+        """
+        if not cluster:
+            return "Unknown"
+
+        # Source priority - higher values are preferred
+        source_priority = {
+            DataSource.BLOOMBERG: 10,
+            DataSource.REFINITIV: 9,
+            DataSource.MSCI: 8,
+            DataSource.BURGISS: 7,
+            DataSource.CUSTOM: 5,
+        }
+
+        candidates: list[tuple[str, float]] = []
+
+        for entity in cluster:
+            if not entity.name:
+                continue
+
+            name = entity.name.strip()
+            if not name:
+                continue
+
+            # Calculate quality score
+            # Length bonus (prefer more complete names, but cap it)
+            length_score = min(len(name) / 50.0, 1.0)
+
+            # Source priority
+            priority_score = source_priority.get(entity.source, 5) / 10.0
+
+            # Penalize names that are all uppercase or contain too many abbreviations
+            has_proper_case = not name.isupper() and not name.islower()
+            case_score = 1.0 if has_proper_case else 0.7
+
+            # Combined score
+            quality_score = (length_score * 0.3) + (priority_score * 0.5) + (case_score * 0.2)
+            candidates.append((name, quality_score))
+
+        if not candidates:
+            return "Unknown"
+
+        # Return the name with the highest quality score
+        return max(candidates, key=lambda x: x[1])[0]
 
     def _create_resolution_result(self, cluster: list[SourceEntity]) -> ResolutionResult:
         """Create a resolution result from a cluster of matched entities."""
-        # Determine canonical name (use most common or first)
-        names = [e.name for e in cluster if e.name]
-        canonical_name = max(set(names), key=names.count) if names else "Unknown"
+        # Determine canonical name using a quality-based selection
+        canonical_name = self._select_canonical_name(cluster)
 
         # Determine entity type
         types = [e.entity_type for e in cluster if e.entity_type != EntityType.UNKNOWN]
