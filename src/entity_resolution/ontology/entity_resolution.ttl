@@ -1,0 +1,272 @@
+@prefix : <http://entity-resolution.org/ontology#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix fibo-fnd-org: <https://spec.edmcouncil.org/fibo/ontology/FND/Organizations/Organizations/> .
+@prefix fibo-fnd-rel: <https://spec.edmcouncil.org/fibo/ontology/FND/Relations/Relations/> .
+
+<http://entity-resolution.org/ontology>
+    a owl:Ontology ;
+    owl:versionInfo "0.1.0" ;
+    rdfs:label "Entity Resolution Ontology"@en ;
+    rdfs:comment "Ontology for financial entity resolution across multiple data sources."@en ;
+    dcterms:created "2024-01-01"^^xsd:date ;
+    dcterms:creator "Entity Resolution Team" .
+
+#################################################################
+#    Classes
+#################################################################
+
+###  Core Entity Classes
+
+:Entity a owl:Class ;
+    rdfs:label "Entity"@en ;
+    rdfs:comment "The base class for all entities in the knowledge graph."@en .
+
+:CanonicalEntity a owl:Class ;
+    rdfs:subClassOf :Entity ;
+    rdfs:label "Canonical Entity"@en ;
+    rdfs:comment "A resolved entity representing the unified view across sources."@en .
+
+:SourceEntity a owl:Class ;
+    rdfs:subClassOf :Entity ;
+    rdfs:label "Source Entity"@en ;
+    rdfs:comment "An entity as it appears in a specific data source."@en .
+
+###  Entity Type Classes
+
+:Company a owl:Class ;
+    rdfs:subClassOf :CanonicalEntity ;
+    rdfs:label "Company"@en ;
+    rdfs:comment "A business entity or corporation."@en .
+
+:Fund a owl:Class ;
+    rdfs:subClassOf :CanonicalEntity ;
+    rdfs:label "Fund"@en ;
+    rdfs:comment "An investment fund or pooled investment vehicle."@en .
+
+:Security a owl:Class ;
+    rdfs:subClassOf :CanonicalEntity ;
+    rdfs:label "Security"@en ;
+    rdfs:comment "A tradable financial asset such as stocks, bonds, or derivatives."@en .
+
+:Person a owl:Class ;
+    rdfs:subClassOf :CanonicalEntity, foaf:Person ;
+    rdfs:label "Person"@en ;
+    rdfs:comment "An individual person, typically in a business context."@en .
+
+:Index a owl:Class ;
+    rdfs:subClassOf :CanonicalEntity ;
+    rdfs:label "Index"@en ;
+    rdfs:comment "A financial index or benchmark."@en .
+
+:Location a owl:Class ;
+    rdfs:subClassOf :CanonicalEntity ;
+    rdfs:label "Location"@en ;
+    rdfs:comment "A geographic location or jurisdiction."@en .
+
+###  Data Source Classes
+
+:DataSource a owl:Class ;
+    rdfs:label "Data Source"@en ;
+    rdfs:comment "A provider of entity data."@en .
+
+:Bloomberg a owl:Class ;
+    rdfs:subClassOf :DataSource ;
+    rdfs:label "Bloomberg"@en ;
+    rdfs:comment "Bloomberg L.P. data source."@en .
+
+:Refinitiv a owl:Class ;
+    rdfs:subClassOf :DataSource ;
+    rdfs:label "Refinitiv"@en ;
+    rdfs:comment "Refinitiv (LSEG Data & Analytics) data source."@en .
+
+:MSCI a owl:Class ;
+    rdfs:subClassOf :DataSource ;
+    rdfs:label "MSCI"@en ;
+    rdfs:comment "MSCI Inc. data source."@en .
+
+:Burgiss a owl:Class ;
+    rdfs:subClassOf :DataSource ;
+    rdfs:label "Burgiss"@en ;
+    rdfs:comment "Burgiss Group data source."@en .
+
+###  Identifier Classes
+
+:Identifier a owl:Class ;
+    rdfs:label "Identifier"@en ;
+    rdfs:comment "A unique identifier for an entity."@en .
+
+:ISIN a owl:Class ;
+    rdfs:subClassOf :Identifier ;
+    rdfs:label "ISIN"@en ;
+    rdfs:comment "International Securities Identification Number."@en .
+
+:LEI a owl:Class ;
+    rdfs:subClassOf :Identifier ;
+    rdfs:label "LEI"@en ;
+    rdfs:comment "Legal Entity Identifier."@en .
+
+:FIGI a owl:Class ;
+    rdfs:subClassOf :Identifier ;
+    rdfs:label "FIGI"@en ;
+    rdfs:comment "Financial Instrument Global Identifier."@en .
+
+:CUSIP a owl:Class ;
+    rdfs:subClassOf :Identifier ;
+    rdfs:label "CUSIP"@en ;
+    rdfs:comment "Committee on Uniform Securities Identification Procedures number."@en .
+
+:SEDOL a owl:Class ;
+    rdfs:subClassOf :Identifier ;
+    rdfs:label "SEDOL"@en ;
+    rdfs:comment "Stock Exchange Daily Official List number."@en .
+
+:Ticker a owl:Class ;
+    rdfs:subClassOf :Identifier ;
+    rdfs:label "Ticker"@en ;
+    rdfs:comment "Stock ticker symbol."@en .
+
+###  Match Classes
+
+:EntityMatch a owl:Class ;
+    rdfs:label "Entity Match"@en ;
+    rdfs:comment "A potential match between two entities."@en .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+:hasIdentifier a owl:ObjectProperty ;
+    rdfs:domain :Entity ;
+    rdfs:range :Identifier ;
+    rdfs:label "has identifier"@en ;
+    rdfs:comment "Links an entity to its identifiers."@en .
+
+:fromSource a owl:ObjectProperty ;
+    rdfs:domain :SourceEntity ;
+    rdfs:range :DataSource ;
+    rdfs:label "from source"@en ;
+    rdfs:comment "Indicates the data source of a source entity."@en .
+
+:resolvesTo a owl:ObjectProperty ;
+    rdfs:domain :SourceEntity ;
+    rdfs:range :CanonicalEntity ;
+    rdfs:label "resolves to"@en ;
+    rdfs:comment "Links a source entity to its canonical representation."@en .
+
+:matchesWith a owl:ObjectProperty, owl:SymmetricProperty ;
+    rdfs:domain :SourceEntity ;
+    rdfs:range :SourceEntity ;
+    rdfs:label "matches with"@en ;
+    rdfs:comment "Indicates two source entities are considered the same."@en .
+
+:hasSourceEntity a owl:ObjectProperty ;
+    owl:inverseOf :resolvesTo ;
+    rdfs:domain :CanonicalEntity ;
+    rdfs:range :SourceEntity ;
+    rdfs:label "has source entity"@en ;
+    rdfs:comment "Links a canonical entity to its source representations."@en .
+
+:relatedTo a owl:ObjectProperty, owl:SymmetricProperty ;
+    rdfs:domain :Entity ;
+    rdfs:range :Entity ;
+    rdfs:label "related to"@en ;
+    rdfs:comment "General relationship between entities."@en .
+
+:subsidiaryOf a owl:ObjectProperty ;
+    rdfs:subPropertyOf :relatedTo ;
+    rdfs:domain :Company ;
+    rdfs:range :Company ;
+    rdfs:label "subsidiary of"@en ;
+    rdfs:comment "Indicates a parent-subsidiary relationship."@en .
+
+:issuedBy a owl:ObjectProperty ;
+    rdfs:domain :Security ;
+    rdfs:range :Company ;
+    rdfs:label "issued by"@en ;
+    rdfs:comment "Links a security to its issuer."@en .
+
+:managedBy a owl:ObjectProperty ;
+    rdfs:domain :Fund ;
+    rdfs:range :Company ;
+    rdfs:label "managed by"@en ;
+    rdfs:comment "Links a fund to its management company."@en .
+
+:locatedIn a owl:ObjectProperty ;
+    rdfs:domain :Entity ;
+    rdfs:range :Location ;
+    rdfs:label "located in"@en ;
+    rdfs:comment "Geographic location of an entity."@en .
+
+#################################################################
+#    Data Properties
+#################################################################
+
+:hasName a owl:DatatypeProperty ;
+    rdfs:domain :Entity ;
+    rdfs:range xsd:string ;
+    rdfs:label "has name"@en ;
+    rdfs:comment "The primary name of an entity."@en .
+
+:hasAlternateName a owl:DatatypeProperty ;
+    rdfs:domain :Entity ;
+    rdfs:range xsd:string ;
+    rdfs:label "has alternate name"@en ;
+    rdfs:comment "An alternate name for an entity."@en .
+
+:hasIdentifierValue a owl:DatatypeProperty ;
+    rdfs:domain :Identifier ;
+    rdfs:range xsd:string ;
+    rdfs:label "has identifier value"@en ;
+    rdfs:comment "The value of an identifier."@en .
+
+:hasSourceId a owl:DatatypeProperty ;
+    rdfs:domain :SourceEntity ;
+    rdfs:range xsd:string ;
+    rdfs:label "has source ID"@en ;
+    rdfs:comment "The unique ID in the source system."@en .
+
+:hasSimilarityScore a owl:DatatypeProperty ;
+    rdfs:domain :EntityMatch ;
+    rdfs:range xsd:decimal ;
+    rdfs:label "has similarity score"@en ;
+    rdfs:comment "The similarity score of an entity match."@en .
+
+:hasConfidence a owl:DatatypeProperty ;
+    rdfs:domain :EntityMatch ;
+    rdfs:range xsd:decimal ;
+    rdfs:label "has confidence"@en ;
+    rdfs:comment "The confidence level of an entity match."@en .
+
+:createdAt a owl:DatatypeProperty ;
+    rdfs:domain :Entity ;
+    rdfs:range xsd:dateTime ;
+    rdfs:label "created at"@en ;
+    rdfs:comment "Timestamp when the entity was created."@en .
+
+:updatedAt a owl:DatatypeProperty ;
+    rdfs:domain :Entity ;
+    rdfs:range xsd:dateTime ;
+    rdfs:label "updated at"@en ;
+    rdfs:comment "Timestamp when the entity was last updated."@en .
+
+#################################################################
+#    Named Individuals (Data Sources)
+#################################################################
+
+:BloombergSource a :Bloomberg, owl:NamedIndividual ;
+    rdfs:label "Bloomberg Source"@en .
+
+:RefinitivSource a :Refinitiv, owl:NamedIndividual ;
+    rdfs:label "Refinitiv Source"@en .
+
+:MSCISource a :MSCI, owl:NamedIndividual ;
+    rdfs:label "MSCI Source"@en .
+
+:BurgissSource a :Burgiss, owl:NamedIndividual ;
+    rdfs:label "Burgiss Source"@en .
